@@ -165,6 +165,130 @@ mjs_plot <- function(data, x, y,
 
 }
 
+mjs_plot_string <- function(data, x, y,
+                     show_rollover_text = TRUE,
+                     linked = FALSE,
+                     decimals=2, format="count",
+                     missing_is_hidden=FALSE,
+                     left = 80, right = 10,
+                     top = 40, bottom = 60, buffer = 8,
+                     width = NULL, height = NULL) {
+
+  if (!format %in% c("percentage", "count")) {
+    stop("'format' must be either 'percentage' or 'count'")
+  }
+
+  eid <- sprintf("mjs-%s",
+                 paste(sample(c(letters[1:6], 0:9), 30, replace=TRUE), collapse=""))
+
+  if (!missing(x)) {
+    x <- substitute(x)
+    if (inherits(x, "name")) { x <- as.character(x) }
+  } else {
+    x <- as.character(x)
+  }
+
+  if (!missing(y)) {
+    y <- substitute(y)
+    if (inherits(y, "name")) { y <- as.character(y) }
+  } else {
+    y <- as.character(y)
+  }
+
+  is_datetime <- function(x) {
+    inherits(x, c('Date', 'POSIXct', 'POSIXlt'))
+  }
+
+  is_posix <- function(x) {
+    inherits(x, c('POSIXct', 'POSIXlt'))
+  }
+
+  orig_posix <- FALSE
+  if (is.null(dim(data))) {
+    if (is_posix(data)) orig_posix <- TRUE
+  } else if (is_posix(data[, x])) {
+    orig_posix <- TRUE
+  }
+
+  if (is.null(dim(data))) {
+    if (is_datetime(data)) data <- as.numeric(data)
+  } else if (is_datetime(data[, x])) {
+    data[, x] <- as.numeric(data[, x])
+  }
+
+  params = list(
+    orig_posix=orig_posix,
+    data=data,
+    x_axis=TRUE,
+    y_axis=TRUE,
+    baseline_accessor=NULL,
+    predictor_accessor=NULL,
+    show_confidence_band=NULL,
+    show_secondary_x_label=NULL,
+    chart_type="line",
+    xax_format="plain",
+    x_label=NULL,
+    y_label=NULL,
+    markers=NULL,
+    baselines=NULL,
+    linked=linked,
+    title=NULL,
+    description=NULL,
+    left=left,
+    right=right,
+    bottom=bottom,
+    buffer=buffer,
+    format=format,
+    y_scale_type="linear",
+    yax_count=5,
+    xax_count=6,
+    x_rug=FALSE,
+    y_rug=FALSE,
+    area=FALSE,
+    missing_is_hidden=missing_is_hidden,
+    size_accessor=NULL,
+    color_accessor=NULL,
+    color_type="number",
+    color_range=c("blue", "red"),
+    size_range=c(1, 5),
+    bar_height=20,
+    min_x=NULL,
+    max_x=NULL,
+    min_y=NULL,
+    max_y=NULL,
+    bar_margin=1,
+    binned=FALSE,
+    bins=NULL,
+    least_squares=FALSE,
+    interpolate="cardinal",
+    decimals=decimals,
+    show_rollover_text=show_rollover_text,
+    x_accessor=x,
+    y_accessor=y,
+    multi_line=NULL,
+    geom="line",
+    yax_units="",
+    legend=NULL,
+    legend_target=NULL,
+    y_extended_ticks=FALSE,
+    x_extended_ticks=FALSE,
+    target=sprintf("#%s", eid)
+  )
+
+  if (is.null(width)) params$full_width <- TRUE
+  if (is.null(height)) params$full_height <- TRUE
+
+  htmlwidgets::createWidget(
+    name = 'metricsgraphics',
+    x = params,
+    width = width,
+    height = height,
+    package = 'metricsgraphics',
+    elementId = eid
+  )
+
+}
+
 #' Plot Histograms with MetrisGraphics
 #'
 #' Given a numeric vector or a data frame and numeric column name (bare or quoted),
@@ -267,7 +391,6 @@ mjs_bar <- function(mjs,
   mjs$x$geom <- "bar"
   mjs
 }
-
 
 #' metricsgraphics.js linechart "geom"
 #'
@@ -396,6 +519,42 @@ mjs_point <- function(mjs,
   }
   if (class(substitute(color_accessor)) != "NULL") {
     color_accessor <- substitute(color_accessor)
+    if (inherits(color_accessor, "name")) { color_accessor <- as.character(color_accessor) }
+    mjs$x$color_accessor <- color_accessor
+  }
+  mjs$x$color_type <- color_type
+  mjs$x$color_range <- color_range
+  mjs$x$size_range <- size_range
+  mjs$x$geom <- "point"
+  mjs
+}
+
+mjs_point_string <- function(mjs,
+                      point_size=2.5,
+                      least_squares=FALSE,
+                      size_accessor=NULL,
+                      color_accessor=NULL,
+                      color_type="number",
+                      color_range=c('blue', 'red'),
+                      size_range=c(1, 5),
+                      x_rug=FALSE,
+                      y_rug=FALSE) {
+
+  if (!color_type %in% c("category", "number")) {
+    stop("'color_type' must be either 'category' or 'number'")
+  }
+
+  mjs$x$chart_type <- "point"
+  mjs$x$least_squares<- least_squares
+  mjs$x$x_rug <- x_rug
+  mjs$x$y_rug <- y_rug
+  if (class(substitute(size_accessor)) != "NULL") {
+    size_accessor <- as.character(size_accessor)
+    if (inherits(size_accessor, "name")) { size_accessor <- as.character(size_accessor) }
+    mjs$x$size_accessor <- size_accessor
+  }
+  if (class(substitute(color_accessor)) != "NULL") {
+    color_accessor <- as.character(color_accessor)
     if (inherits(color_accessor, "name")) { color_accessor <- as.character(color_accessor) }
     mjs$x$color_accessor <- color_accessor
   }
