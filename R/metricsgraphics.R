@@ -61,14 +61,14 @@ mjs_plot <- function(data, x, y,
     x <- substitute(x)
     if (inherits(x, "name")) { x <- as.character(x) }
   } else {
-    x <- as.character(substitute(x))
+    x <- as.character(x)
   }
 
   if (!missing(y)) {
     y <- substitute(y)
     if (inherits(y, "name")) { y <- as.character(y) }
   } else {
-    y <- as.character(substitute(y))
+    y <- as.character(y)
   }
 
   is_datetime <- function(x) {
